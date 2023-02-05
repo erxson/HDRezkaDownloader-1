@@ -24,6 +24,7 @@ class Downloader:
 	def __init__(self):
 		super(Downloader, self).__init__()
 		self.hdrezka = HDRezka(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0')
+		self.quality = None
 
 	def inputTranslation(self, translations):
 		try:
@@ -98,13 +99,12 @@ class Downloader:
 	def download(self, name, id, translation, favs, type, season, serie):
 		try:
 			cdn = self.hdrezka.getCDN(id, translation, favs, type, season, serie)
-			quality = self.inputQuality(re.findall(r'\[(.*?)\].*? or (.*?.mp4)', cdn['urls']))
 			console.print('[green]Начинаю скачивание')
 			if os.path.exists(f"{self.folder}/{season}/{serie}.mp4"):
 				clear()
 				console.print(f'[yellow][{season}] Уже скачен {serie} пропуск')
 				return
-			download(quality[1], f"{self.folder}/{season}/{serie}.mp4", f'{name} Сезон {season} серия {serie}')
+			download(self.quality[1], f"{self.folder}/{season}/{serie}.mp4", f'{name} Сезон {season} серия {serie}')
 			clear()
 		except Exception as e:
 			# print('Error', e)
@@ -137,6 +137,10 @@ class Downloader:
 				self.folder = folder
 
 				for serie in watch['player']['series'][season]:
+					if self.quality == None:
+						cdn = self.hdrezka.getCDN(id, translation, watch['favs'], watch['player']['default']['type'], season, serie)
+						self.quality = self.inputQuality(re.findall(r'\[(.*?)\].*? or (.*?.mp4)', cdn['urls']))
+					
 					console.print(f'[yellow]Сезон {season} серия {serie}')
 					self.download(name, id, translation, watch['favs'], watch['player']['default']['type'], season, serie)
 		else:
